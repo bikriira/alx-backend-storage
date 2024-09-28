@@ -44,5 +44,8 @@ def get_page(url: str) -> str:
         str: The HTML content of the URL.
     """
     response = requests.get(url)  # Send GET request
-    print("NOT CACHED")
     return response.text  # Return response content
+
+
+if __name__ == "__main__":
+    get_page("http://google.com")
