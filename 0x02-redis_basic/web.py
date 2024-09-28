@@ -51,8 +51,8 @@ def cacher(f: Callable) -> Callable:
         page_content = redis_client.get(f"text:{url}")
         if not page_content:
             page_content = f(url)
-            redis_client.setex(f"text:{url}", 10, page_content)
-        return page_content.decode('utf-8')
+            redis_client.set(f"text:{url}",  page_content, 10)
+        return page_content
     return wrapper
 
 
@@ -74,4 +74,5 @@ def get_page(url: str) -> str:
 if __name__ == "__main__":
     test_url = "http://slowwly.robertomurray.co.uk"
     print(get_page(test_url)[:100])  # Print first 100 characters of content
-    print(f"Access count: {redis_client.get(f'count:{test_url}').decode('utf-8')}")
+    print(f"Access count: {redis_client.get(
+        f'count:{test_url}').decode('utf-8')}")
