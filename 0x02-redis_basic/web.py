@@ -19,7 +19,7 @@ def cacher(f: Callable) -> Callable:
     Returns:
         Callable: A wrapper function that implements caching.
     """
-    def wrapper(*args):
+    def wrapper(*args: list) -> str:
         """Wrapper function to cache the output of the decorated function."""
         url = args[0]
         redis_client.incr(f"count:{url}")
@@ -46,4 +46,3 @@ def get_page(url: str) -> str:
     response = requests.get(url)  # Send GET request
     print("NOT CACHED")
     return response.text  # Return response content
-
