@@ -8,7 +8,7 @@ import redis
 import uuid
 
 
-def count_calls(method: Callable[[], Any]) -> Callable[[], Any]:
+def count_calls(method: Callable) -> Callable:
     """Decorator to count the number of times a method is called.
 
     Args:
@@ -17,7 +17,6 @@ def count_calls(method: Callable[[], Any]) -> Callable[[], Any]:
     Returns:
         Callable[[], Any]: The wrapper function that increments the count.
     """
-    key = method.__qualname__
 
     @wraps(method)
     def incrementer(self, *args, **kwargs):
@@ -31,7 +30,7 @@ def count_calls(method: Callable[[], Any]) -> Callable[[], Any]:
         Returns:
             Any: The result of the original method call.
         """
-        self._redis.incrby(key, 1)
+        self._redis.incr(method.__qualname__)
         return method(self, *args, **kwargs)
     return incrementer
 
