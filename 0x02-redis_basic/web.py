@@ -7,6 +7,7 @@ import requests
 import redis
 from typing import Callable
 from functools import wraps
+from datetime import timedelta
 # ~~~~~ TO SEE DIFFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
 # import time
 
@@ -44,7 +45,7 @@ def cacher(f: Callable) -> Callable:
         page_content = redis_client.get(f"text:{url}")
         if not page_content:
             page_content = f(url)
-            redis_client.setex(f"text:{url}", 10, page_content)
+            redis_client.setex(f"text:{url}", timedelta(seconds=10), page_content)
         else:
             page_content = str(page_content)
         return page_content
