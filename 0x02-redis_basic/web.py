@@ -18,7 +18,7 @@ import requests
 import redis
 
 
-# Uncomment to enable execution time tracking
+# Uncomment to enable execution time tracking, and add @timer_decorator
 # def timer_decorator(func):
 #     """Decorator to measure the execution time of a function."""
 #     @wraps(func)
@@ -57,7 +57,6 @@ def cacher(f: Callable) -> Callable:
     return wrapper
 
 
-# @timer_decorator
 @cacher
 def get_page(url: str) -> str:
     """Fetches the HTML content of a given URL.
