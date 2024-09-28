@@ -1,69 +1,36 @@
 #!/usr/bin/env python3
 """
-This module provides a simple caching system using Redis for
-storing and retrieving HTML content of web pages.
+Caching request module
 """
-import requests
 import redis
-from typing import Callable
+import requests
 from functools import wraps
-# ~~~~~ TO SEE DIFFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
-# import time
+from typing import Callable
 
 
-# def timer_decorator(func):
-#     """Decorator to measure the execution time of a function."""
-#     @wraps(func)
-#     def wrapper(*args, **kwargs):
-#         start_time = time.time()
-#         result = func(*args, **kwargs)
-#         end_time = time.time()
-#         exec_time = end_time - start_time
-#         print(f"Execution time of {func.__name__}: {exec_time:.4f} seconds")
-#         return result
-#     return wrapper
-
-
-redis_client = redis.Redis()
-
-
-def cacher(f: Callable) -> Callable:
-    """Decorator that caches the result of a function.
-
-    Args:
-        f (Callable): The function to be cached.
-
-    Returns:
-        Callable: A wrapper function that implements caching.
+def track_get_page(fn: Callable) -> Callable:
+    """ Decorator for get_page
     """
-    @wraps(f)
+    @wraps(fn)
     def wrapper(url: str) -> str:
-        """Wrapper function to cache the output of the decorated function."""
-        redis_client.incr(f"count:{url}")
-        page_content = redis_client.get(url)
-        if not page_content:
-            page_content = f(url)
-            redis_client.setex(url, 10, page_content)
-        else:
-            page_content = str(page_content)
-        return page_content
+        """ Wrapper that:
+            - check whether a url's data is cached
+            - tracks how many times get_page is called
+        """
+        client = redis.Redis()
+        client.incr(f'count:{url}')
+        cached_page = client.get(f'{url}')
+        if cached_page:
+            return cached_page.decode('utf-8')
+        response = fn(url)
+        client.set(f'{url}', response, 10)
+        return response
     return wrapper
 
 
-# @timer_decorator
-@cacher
+@track_get_page
 def get_page(url: str) -> str:
-    """Fetches the HTML content of a given URL.
-
-    Args:
-        url (str): The URL to fetch content from.
-
-    Returns:
-        str: The HTML content of the URL.
+    """ Makes a http request to a given endpoint
     """
-    response = requests.get(url)  # Send GET request
-    return response.text  # Return response content
-
-
-if __name__ == "__main__":
-    get_page("http://slowwly.robertomurray.co.uk")
+    response = requests.get(url)
+    return response.text
