@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
+"""
+This module provides a simple caching system using Redis for storing and retrieving 
+HTML content of web pages. It includes a decorator function, `cacher`, which caches 
+the results of the `get_page` function and tracks how many times a particular URL 
+has been accessed.
+
+Features:
+- Tracks the number of accesses for each URL.
+- Caches HTML content of the URL in Redis with a 10-second expiration time.
+- Optionally, measures and displays the execution time of each request (uncomment 
+  the timing decorator for this feature).
+"""
 # ~~~~~ TO SEE DIFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
 # from functools import wraps
 # import time
+from typing import Callable
 import requests
 import redis
 
@@ -20,7 +33,7 @@ re = redis.Redis()
 #     return wrapper
 
 
-def cacher(f):
+def cacher(f: Callable) -> Callable:
     """Decorator that caches the result of a function.
 
     Args:
@@ -35,7 +48,7 @@ def cacher(f):
         page_content = re.get(f"text:{url}")
         if not page_content:
             page_content = f(url)
-            re.setex(f"text:{url}", 100, page_content)
+            re.setex(f"text:{url}", 10, page_content)
         return page_content
     return wrapper
 
