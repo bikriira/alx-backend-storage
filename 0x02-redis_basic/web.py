@@ -1,69 +1,54 @@
 #!/usr/bin/env python3
-"""
-This module provides a simple caching system using Redis for
-storing and retrieving HTML content of web pages.
-"""
-import requests
+"""In this tasks, we will implement a get_page function
+(prototype: def get_page(url: str) -> str:). The core of
+the function is very simple. It uses the requests module
+to obtain the HTML content of a particular URL and returns it.
+
+Start in a new file named web.py and do not reuse the code
+written in exercise.py.
+
+Inside get_page track how many times a particular URL was
+accessed in the key "count:{url}" and cache the result with
+an expiration time of 10 seconds.
+
+Tip: Use http://slowwly.robertomurray.co.uk to simulate
+a slow response and test your caching."""
+
+
 import redis
-from typing import Callable
+import requests
 from functools import wraps
-# ~~~~~ TO SEE DIFFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
-# import time
+
+r = redis.Redis()
 
 
-# def timer_decorator(func):
-#     """Decorator to measure the execution time of a function."""
-#     @wraps(func)
-#     def wrapper(*args, **kwargs):
-#         start_time = time.time()
-#         result = func(*args, **kwargs)
-#         end_time = time.time()
-#         exec_time = end_time - start_time
-#         print(f"Execution time of {func.__name__}: {exec_time:.4f} seconds")
-#         return result
-#     return wrapper
+def url_access_count(method):
+    """decorator for get_page function"""
+    @wraps(method)
+    def wrapper(url):
+        """wrapper function"""
+        key = "cached:" + url
+        cached_value = r.get(key)
+        if cached_value:
+            return cached_value.decode("utf-8")
 
+            # Get new content and update cache
+        key_count = "count:" + url
+        html_content = method(url)
 
-redis_client = redis.Redis()
-
-
-def cacher(f: Callable) -> Callable:
-    """Decorator that caches the result of a function.
-
-    Args:
-        f (Callable): The function to be cached.
-
-    Returns:
-        Callable: A wrapper function that implements caching.
-    """
-    @wraps(f)
-    def wrapper(url: str) -> str:
-        """Wrapper function to cache the output of the decorated function."""
-        page_content = redis_client.get("text:{url}")
-        if not page_content:
-            page_content = f(url)
-            redis_client.incr(f"count:{url}")
-            redis_client.setex(f"text:{url}", 10, page_content)
-        else:
-            page_content = page_content.decode("utf-8")
-        return page_content
+        r.incr(key_count)
+        r.set(key, html_content, ex=10)
+        r.expire(key, 10)
+        return html_content
     return wrapper
 
 
-# @timer_decorator
-@cacher
+@url_access_count
 def get_page(url: str) -> str:
-    """Fetches the HTML content of a given URL.
-
-    Args:
-        url (str): The URL to fetch content from.
-
-    Returns:
-        str: The HTML content of the URL.
-    """
-    response = requests.get(url)  # Send GET request
-    return response.text  # Return response content
+    """obtain the HTML content of a particular"""
+    results = requests.get(url)
+    return results.text
 
 
 if __name__ == "__main__":
-    get_page("http://slowwly.robertomurray.co.uk")
+    get_page('http://slowwly.robertomurray.co.uk')
