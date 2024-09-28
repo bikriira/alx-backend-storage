@@ -1,38 +1,70 @@
 #!/usr/bin/env python3
-'''A module with tools for request caching and tracking.
-'''
-import redis
+"""
+This module provides a simple caching system using Redis for
+storing and retrieving HTML content of web pages.
+"""
 import requests
-from functools import wraps
+import redis
 from typing import Callable
+from functools import wraps
+# ~~~~~ TO SEE DIFFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
+# import time
 
 
-redis_store = redis.Redis()
-'''The module-level Redis instance.
-'''
+# def timer_decorator(func):
+#     """Decorator to measure the execution time of a function."""
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         start_time = time.time()
+#         result = func(*args, **kwargs)
+#         end_time = time.time()
+#         exec_time = end_time - start_time
+#         print(f"Execution time of {func.__name__}: {exec_time:.4f} seconds")
+#         return result
+#     return wrapper
 
 
-def data_cacher(method: Callable) -> Callable:
-    '''Caches the output of fetched data.
-    '''
-    @wraps(method)
-    def invoker(url) -> str:
-        '''The wrapper function for caching the output.
-        '''
-        redis_store.incr(f'count:{url}')
-        result = redis_store.get(f'result:{url}')
-        if result:
-            return result.decode('utf-8')
-        result = method(url)
-        redis_store.set(f'count:{url}', 0)
-        redis_store.setex(f'result:{url}', 10, result)
-        return result
-    return invoker
+redis_client = redis.Redis()
 
 
-@data_cacher
+def cacher(f: Callable) -> Callable:
+    """Decorator that caches the result of a function.
+
+    Args:
+        f (Callable): The function to be cached.
+
+    Returns:
+        Callable: A wrapper function that implements caching.
+    """
+    @wraps(f)
+    def wrapper(url: str) -> str:
+        """Wrapper function to cache the output of the decorated function."""
+        redis_client.incr(f"count:{url}")
+        redis_client.expire("count", 10)
+        page_content = redis_client.get("text:{url}")
+        if not page_content:
+            page_content = f(url)
+            redis_client.set(f"text:{url}",page_content)
+        else:
+            page_content = str(page_content)
+        return page_content
+    return wrapper
+
+
+# @timer_decorator
+@cacher
 def get_page(url: str) -> str:
-    '''Returns the content of a URL after caching the request's response,
-    and tracking the request.
-    '''
-    return requests.get(url).text
+    """Fetches the HTML content of a given URL.
+
+    Args:
+        url (str): The URL to fetch content from.
+
+    Returns:
+        str: The HTML content of the URL.
+    """
+    response = requests.get(url)  # Send GET request
+    return response.text  # Return response content
+
+
+if __name__ == "__main__":
+    get_page("http://slowwly.robertomurray.co.uk")
