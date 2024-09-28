@@ -3,9 +3,26 @@
 This module provides a simple caching system using Redis for
 storing and retrieving HTML content of web pages.
 """
-from typing import Callable
 import requests
 import redis
+from typing import Callable
+from functools import wraps
+# ~~~~~ TO SEE DIFFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
+# import time
+
+
+# def timer_decorator(func):
+#     """Decorator to measure the execution time of a function."""
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         start_time = time.time()
+#         result = func(*args, **kwargs)
+#         end_time = time.time()
+#         exec_time = end_time - start_time
+#         print(f"Execution time of {func.__name__}: {exec_time:.4f} seconds")
+#         return result
+#     return wrapper
+
 
 redis_client = redis.Redis()
 
@@ -19,6 +36,7 @@ def cacher(f: Callable) -> Callable:
     Returns:
         Callable: A wrapper function that implements caching.
     """
+    @wraps(f)
     def wrapper(*args: list) -> str:
         """Wrapper function to cache the output of the decorated function."""
         url = args[0]
@@ -33,6 +51,7 @@ def cacher(f: Callable) -> Callable:
     return wrapper
 
 
+# @timer_decorator
 @cacher
 def get_page(url: str) -> str:
     """Fetches the HTML content of a given URL.
@@ -48,4 +67,4 @@ def get_page(url: str) -> str:
 
 
 if __name__ == "__main__":
-    get_page("http://google.com")
+    get_page("http://slowwly.robertomurray.co.uk")
