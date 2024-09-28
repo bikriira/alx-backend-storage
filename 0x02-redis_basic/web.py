@@ -2,12 +2,6 @@
 """
 This module provides a simple caching system using Redis for
 storing and retrieving HTML content of web pages.
-
-Features:
-- Tracks the number of accesses for each URL.
-- Caches HTML content of the URL in Redis with a 10-second expiration time.
-- Optionally, measures and displays the execution time of each
-  request (uncomment the timing decorator for this feature).
 """
 from typing import Callable
 import requests
