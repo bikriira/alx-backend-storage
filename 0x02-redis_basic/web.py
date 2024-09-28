@@ -32,7 +32,7 @@ import redis
 #     return wrapper
 
 
-re = redis.Redis()
+redis_client = redis.Redis()
 
 
 def cacher(f: Callable) -> Callable:
@@ -47,13 +47,12 @@ def cacher(f: Callable) -> Callable:
     def wrapper(*args):
         """Wrapper function to cache the output of the decorated function."""
         url = args[0]
-        re.incr(f"count:{url}")
-        page_content = re.get(f"text:{url}")
+        redis_client.incr(f"count:{url}")
+        page_content = redis_client.get(f"text:{url}")
         if not page_content:
             page_content = f(url)
-            # Set cache with expiration
-            re.setex(f"text:{url}", 10, page_content)
-        return page_content
+            redis_client.setex(f"text:{url}", 10, page_content)
+        return page_content.decode('utf-8')
     return wrapper
 
 
@@ -75,4 +74,4 @@ def get_page(url: str) -> str:
 if __name__ == "__main__":
     test_url = "http://slowwly.robertomurray.co.uk"
     print(get_page(test_url)[:100])  # Print first 100 characters of content
-    print(f"Access count: {re.get(f'count:{test_url}').decode('utf-8')}")
+    print(f"Access count: {redis_client.get(f'count:{test_url}').decode('utf-8')}")
