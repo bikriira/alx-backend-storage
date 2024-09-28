@@ -3,6 +3,7 @@
 This module provides a Cache class for storing and managing data in Redis
 """
 from functools import wraps
+from pprint import pprint
 from typing import Any, Union, Callable, ByteString, Optional
 import redis
 import uuid
@@ -97,17 +98,17 @@ class Cache:
         return key
 
     def get(self, key: str, fn: Optional[Callable[[ByteString], Any]] = None) -> Any:
-        """Retrieves the data associated with the provided key, 
-           and can optionally apply a conversion function to the retrieved data 
+        """Retrieves the data associated with the provided key,
+           and can optionally apply a conversion function to the retrieved data
            for proper formatting.
 
         Args:
             key (str): The key for the data stored in Redis.
-            fn (Optional[Callable[[ByteString], Any]]): A callable to convert 
+            fn (Optional[Callable[[ByteString], Any]]): A callable to convert
                 the retrieved data to its original format.
 
         Returns:
-            Any: The retrieved data, optionally converted by the callable 
+            Any: The retrieved data, optionally converted by the callable
                 function, or None if the key does not exist.
         """
         data = self._redis.get(key)
@@ -116,27 +117,48 @@ class Cache:
         return fn(data) if fn else data
 
     def get_str(self, key: str) -> Optional[str]:
-        """Retrieves the byte data associated with the specified key 
+        """Retrieves the byte data associated with the specified key
            and decodes it using UTF-8 to return a string.
 
         Args:
             key (str): The key for the data stored in Redis.
 
         Returns:
-            Optional[str]: The decoded string, or None if the key does not 
+            Optional[str]: The decoded string, or None if the key does not
                 exist or cannot be decoded.
         """
         return self.get(key, fn=lambda d: d.decode("utf-8"))
 
     def get_int(self, key: str) -> Optional[int]:
-        """Retrieves the data associated with the specified key 
+        """Retrieves the data associated with the specified key
            and converts it to an integer if possible.
 
         Args:
             key (str): The key for the data stored in Redis.
 
         Returns:
-            Optional[int]: The integer value, or None if the key does not 
+            Optional[int]: The integer value, or None if the key does not
                 exist or cannot be converted.
         """
         return self.get(key, fn=int)
+
+
+def replay(method: Callable) -> None:
+    """Replays the history of inputs and outputs for the given method.
+
+    Args:
+        method (Callable): The method whose call history is being replayed.
+    """
+    redis = method.__self__._redis
+    inputs = [
+        i.decode('utf-8') for i in redis.lrange(f"{method.__qualname__}:inputs", 0, -1)
+    ]
+    outputs = [
+        o.decode('utf-8') for o in redis.lrange(f"{method.__qualname__}:outputs", 0, -1)
+    ]
+    result = tuple(zip(inputs, outputs))
+    pprint(result)
+    print(f"{method.__qualname__} was called {len(result)} times:")
+
+    for call in result:
+        print(f"{method.__qualname__}(*{call[0]}) -> {call[1]}")
