@@ -50,7 +50,8 @@ def count_calls(method: Callable) -> Callable:
 
     @wraps(method)
     def incrementer(self, *args, **kwargs):
-        """This function is responsible for updating the Redis key and calling the original method.
+        """This function is responsible for updating the Redis key and
+           calling the original method.
 
         Args:
             self: The instance of the class.
@@ -88,16 +89,16 @@ class Cache:
         """Store data in Redis with a unique randomly generated key.
 
         Args:
-            data (Union[str, bytes, int, float]): The data to be stored in Redis.
+            data (Union[str, bytes, int, float]): The data to be stored.
 
         Returns:
-            str: A unique randomly generated key under which the data is stored.
+            str: A unique randomly generated key associated to the data.
         """
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Optional[Callable[[ByteString], Any]] = None) -> Any:
+    def get(self, key: str, fn: Optional[Callable] = None) -> Any:
         """Retrieves the data associated with the provided key,
            and can optionally apply a conversion function to the retrieved data
            for proper formatting.
@@ -151,13 +152,14 @@ def replay(method: Callable) -> None:
     """
     redis = method.__self__._redis
     inputs = [
-        i.decode('utf-8') for i in redis.lrange(f"{method.__qualname__}:inputs", 0, -1)
+        i.decode('utf-8') for i in
+        redis.lrange(f"{method.__qualname__}:inputs", 0, -1)
     ]
     outputs = [
-        o.decode('utf-8') for o in redis.lrange(f"{method.__qualname__}:outputs", 0, -1)
+        o.decode('utf-8') for o in
+        redis.lrange(f"{method.__qualname__}:outputs", 0, -1)
     ]
     result = tuple(zip(inputs, outputs))
-    pprint(result)
     print(f"{method.__qualname__} was called {len(result)} times:")
 
     for call in result:
