@@ -39,10 +39,10 @@ def cacher(f: Callable) -> Callable:
     @wraps(f)
     def wrapper(url: str) -> str:
         """Wrapper function to cache the output of the decorated function."""
-        redis_client.incr(f"count:{url}")
         page_content = redis_client.get("text:{url}")
         if not page_content:
             page_content = f(url)
+            redis_client.incr(f"count:{url}")
             redis_client.setex(f"text:{url}", 10, page_content)
         else:
             page_content = page_content.decode("utf-8")
