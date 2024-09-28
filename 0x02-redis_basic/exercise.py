@@ -8,6 +8,35 @@ import redis
 import uuid
 
 
+def call_history(method: Callable) -> Callable:
+    """Decorator to record the history of inputs and outputs for a method.
+
+    Args:
+        method (Callable): The method to be decorated.
+
+    Returns:
+        Callable: The wrapper function that logs inputs and outputs in Redis.
+    """
+
+    @wraps(method)
+    def apply(self, *args):  # kwargs for now are not used
+        """Wrapper function that logs method calls in Redis.
+
+        Args:
+            self: The instance of the class.
+            *args: Positional arguments for the method.
+
+        Returns:
+            Any: The output of the original method call.
+        """
+        self._redis.rpush(f"{method.__qualname__}:inputs", str(args))
+        outputs = method(self, *args)
+        self._redis.rpush(f"{method.__qualname__}:outputs", str(outputs))
+        return outputs
+
+    return apply
+
+
 def count_calls(method: Callable) -> Callable:
     """Decorator to count the number of times a method is called.
 
@@ -52,6 +81,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """Store data in Redis with a unique randomly generated key.
