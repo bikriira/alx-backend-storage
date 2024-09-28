@@ -1,5 +1,7 @@
 __pycache__/
-*-main.py
+*main.py
 
 *.out
 exec_auto_asigner.sh
+
+.venv/
