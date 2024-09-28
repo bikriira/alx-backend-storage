@@ -47,10 +47,3 @@ def get_page(url: str) -> str:
     print("NOT CACHED")
     return response.text  # Return response content
 
-
-# Example usage
-if __name__ == "__main__":
-    test_url = "http://slowwly.robertomurray.co.uk"
-    print(get_page(test_url)[:100])  # Print first 100 characters of content
-    print(f"Access count: {redis_client.get(
-        f'count:{test_url}').decode('utf-8')}")
