@@ -28,7 +28,7 @@ def cacher(f: Callable) -> Callable:
             page_content = f(url)
             redis_client.setex(f"text:{url}", 10, page_content)
         else:
-            page_content = page_content.decode("utf-8")
+            page_content = str(page_content)
         return page_content
     return wrapper
 
