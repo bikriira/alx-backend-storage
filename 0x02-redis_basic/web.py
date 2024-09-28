@@ -7,7 +7,6 @@ import requests
 import redis
 from typing import Callable
 from functools import wraps
-from datetime import timedelta
 # ~~~~~ TO SEE DIFFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
 # import time
 
@@ -38,14 +37,13 @@ def cacher(f: Callable) -> Callable:
         Callable: A wrapper function that implements caching.
     """
     @wraps(f)
-    def wrapper(*args: list) -> str:
+    def wrapper(url: str) -> str:
         """Wrapper function to cache the output of the decorated function."""
-        url = args[0]
-        page_content = redis_client.get(f"text:{url}")
+        redis_client.incr(f"count:{url}")
+        page_content = redis_client.get(url)
         if not page_content:
-            redis_client.incr(f"count:{url}")
             page_content = f(url)
-            redis_client.setex(f"text:{url}", timedelta(seconds=10), page_content)
+            redis_client.setex(url, 10, page_content)
         else:
             page_content = str(page_content)
         return page_content
