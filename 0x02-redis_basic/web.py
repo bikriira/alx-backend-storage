@@ -51,7 +51,9 @@ def cacher(f: Callable) -> Callable:
         page_content = redis_client.get(f"text:{url}")
         if not page_content:
             page_content = f(url)
-            redis_client.set(f"text:{url}",  page_content, 10)
+            redis_client.setex(f"text:{url}", 10, page_content)
+        else:
+            page_content = page_content.decode("utf-8")
         return page_content
     return wrapper
 
@@ -67,6 +69,7 @@ def get_page(url: str) -> str:
         str: The HTML content of the URL.
     """
     response = requests.get(url)  # Send GET request
+    print("NOT CACHED")
     return response.text  # Return response content
 
 
