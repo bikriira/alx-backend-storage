@@ -9,28 +9,9 @@ Features:
 - Optionally, measures and displays the execution time of each
   request (uncomment the timing decorator for this feature).
 """
-
-# ~~~~~ TO SEE DIFFERENCE IN EXECUTION TIME UNCOMMENT all ~~~~~#
-# from functools import wraps
-# import time
 from typing import Callable
 import requests
 import redis
-
-
-# Uncomment to enable execution time tracking, and add @timer_decorator
-# def timer_decorator(func):
-#     """Decorator to measure the execution time of a function."""
-#     @wraps(func)
-#     def wrapper(*args, **kwargs):
-#         start_time = time.time()
-#         result = func(*args, **kwargs)
-#         end_time = time.time()
-#         exec_time = end_time - start_time
-#         print(f"Execution time of {func.__name__}: {exec_time:.4f} seconds")
-#         return result
-#     return wrapper
-
 
 redis_client = redis.Redis()
 
