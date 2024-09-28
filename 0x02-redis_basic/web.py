@@ -42,7 +42,7 @@ def cacher(f: Callable) -> Callable:
         page_content = redis_client.get("text:{url}")
         if not page_content:
             page_content = f(url)
-            redis_client.setex(f"text:{url}", 10, page_content)
+            redis_client.set(f"text:{url}", 10, page_content)
         else:
             page_content = page_content.decode("utf-8")
         return page_content
@@ -62,6 +62,7 @@ def get_page(url: str) -> str:
     """
     response = requests.get(url)  # Send GET request
     redis_client.incr(f"count:{url}")
+    redis_client.expire("count", 10)
     return response.text  # Return response content
 
 
